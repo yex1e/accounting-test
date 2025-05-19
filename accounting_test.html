@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Accounting Test</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      max-width: 700px;
+      margin: auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .selected { background: #007bff; color: white; }
+    .outline { background: white; border: 1px solid #ccc; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="card" id="quiz">Loading questions...</div>
+
+  <script>
+    let index = 0;
+    let selected = null;
+    let questions = [];
+
+    async function loadQuestions() {
+      const res = await fetch('accounting_questions.json');
+      questions = await res.json();
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const quiz = document.getElementById("quiz");
+      if (index >= questions.length) {
+        quiz.innerHTML = "<h2>Test complete!</h2>";
+        return;
+      }
+
+      const q = questions[index];
+      quiz.innerHTML = `
+        <h2>${q.text}</h2>
+        <div id="options">
+          ${q.options.map(opt => `<button class="outline" onclick="selectOption(this, '${opt}')">${opt}</button>`).join("")}
+        </div>
+        <div style="margin-top: 20px;">
+          <button onclick="submitAnswer()" id="submitBtn" class="hidden">Submit</button>
+        </div>
+        <div id="feedback" style="margin-top: 20px;"></div>
+      `;
+    }
+
+    function selectOption(button, value) {
+      selected = value;
+      document.querySelectorAll("#options button").forEach(btn => btn.className = "outline");
+      button.className = "selected";
+      document.getElementById("submitBtn").classList.remove("hidden");
+    }
+
+    function submitAnswer() {
+      const q = questions[index];
+      const feedback = document.getElementById("feedback");
+
+      if (selected === q.correct) {
+        feedback.innerHTML = `<p>✅ Correct!</p><p><small>Explanation: ${q.explanation}</small></p>`;
+      } else {
+        feedback.innerHTML = `<p>❌ Incorrect. Correct answer: ${q.correct}</p><p><small>Explanation: ${q.explanation}</small></p>`;
+      }
+
+      feedback.innerHTML += `<button onclick="nextQuestion()">Next Question</button>`;
+      document.querySelectorAll("#options button").forEach(btn => btn.disabled = true);
+      document.getElementById("submitBtn").classList.add("hidden");
+    }
+
+    function nextQuestion() {
+      index++;
+      selected = null;
+      renderQuestion();
+    }
+
+    loadQuestions();
+  </script>
+</body>
+</html>
